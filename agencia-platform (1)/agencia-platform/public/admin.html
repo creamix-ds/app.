@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel — Creamixds</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="view-login" class="login-wrap hidden">
+  <div class="panel login">
+    <div class="brand" style="margin-bottom:14px">Mi <span>Agencia</span> · Panel</div>
+    <div id="login-alert"></div>
+    <form id="form-login">
+      <div class="field"><label>Usuario</label><input name="usuario" required autofocus></div>
+      <div class="field"><label>Contraseña</label><input name="password" type="password" required></div>
+      <button class="btn" type="submit" style="width:100%;justify-content:center">Ingresar</button>
+    </form>
+    <p style="font-size:13px;color:var(--muted);margin-top:12px"><a href="/">← Volver al sitio</a></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="view-app" class="layout hidden">
+  <aside>
+    <a class="brand" href="/">Creamix<span style="color:#7833ca">DS</span></a>
+    <a class="nav" href="#dashboard" data-view="dashboard">Inicio</a>
+    <a class="nav" href="#servicios" data-view="servicios">Servicios</a>
+    <a class="nav" href="#mensajes" data-view="mensajes">Mensajes <span class="badge hidden" id="badge-noleidos">0</span></a>
+    <a class="nav" href="#cuenta" data-view="cuenta">Mi cuenta</a>
+    <a class="nav" href="#" id="btn-logout">Salir</a>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="sec-dashboard" class="hidden">
+      <div class="page-head"><h1>Inicio</h1><span id="hola" style="color:var(--muted)"></span></div>
+      <div class="stats" id="stats"></div>
+      <h3 style="margin:8px 0 10px">Últimos mensajes</h3>
+      <div id="dash-mensajes"></div>
+    </section>
+
+    <!-- SERVICIOS -->
+    <section id="sec-servicios" class="hidden">
+      <div class="page-head"><h1>Servicios</h1><button class="btn" onclick="abrirServicio()">+ Nuevo servicio</button></div>
+      <div id="tabla-servicios"></div>
+    </section>
+
+    <!-- MENSAJES -->
+    <section id="sec-mensajes" class="hidden">
+      <div class="page-head"><h1>Mensajes de contacto</h1></div>
+      <div class="toolbar">
+        <input id="f-q" placeholder="Buscar…">
+        <select id="f-estado">
+          <option value="">Todos los estados</option>
+          <option value="nuevo">Nuevo</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="respondido">Respondido</option>
+          <option value="archivado">Archivado</option>
+        </select>
+        <select id="f-leido"><option value="">Leídos y no leídos</option><option value="0">Solo no leídos</option><option value="1">Solo leídos</option></select>
+        <button class="btn secondary sm" onclick="cargarMensajes()">Filtrar</button>
+      </div>
+      <div id="tabla-mensajes"></div>
+    </section>
+
+    <!-- CUENTA -->
+    <section id="sec-cuenta" class="hidden">
+      <div class="page-head"><h1>Mi cuenta</h1></div>
+      <div class="panel" style="max-width:420px">
+        <h3 style="margin-top:0">Cambiar contraseña</h3>
+        <div id="pass-alert"></div>
+        <form id="form-pass">
+          <div class="field"><label>Contraseña actual</label><input name="actual" type="password" required></div>
+          <div class="field"><label>Nueva contraseña</label><input name="nueva" type="password" required minlength="6"></div>
+          <button class="btn" type="submit">Guardar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL SERVICIO -->
+<div class="modal-bg" id="modal-servicio">
+  <div class="modal">
+    <h2 id="modal-servicio-titulo">Nuevo servicio</h2>
+    <div id="servicio-alert"></div>
+    <form id="form-servicio">
+      <input type="hidden" name="id">
+      <div class="row">
+        <div class="field"><label>Nombre *</label><input name="nombre" required maxlength="120"></div>
+        <div class="field"><label>Categoría</label><input name="categoria" maxlength="60" placeholder="Ej: Diseño, Marketing"></div>
+      </div>
+      <div class="field"><label>Descripción</label><textarea name="descripcion"></textarea></div>
+      <div class="row">
+        <div class="field"><label>Precio</label><input name="precio" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Moneda</label><select name="moneda"><option>ARS</option><option>USD</option><option>EUR</option></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Duración / plazo</label><input name="duracion" maxlength="60" placeholder="Ej: 2 semanas, mensual"></div>
+        <div class="field"><label>Orden de visualización</label><input name="orden" type="number" value="0"></div>
+      </div>
+      <div class="field"><label>Imagen (URL)</label><input name="imagen_url" type="url" placeholder="https://…"></div>
+      <div class="field check"><input type="checkbox" name="activo" id="chk-activo" checked><label for="chk-activo" style="margin:0">Publicado (visible en el sitio)</label></div>
+      <div class="foot">
+        <button type="button" class="btn secondary" onclick="cerrar('modal-servicio')">Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL MENSAJE -->
+<div class="modal-bg" id="modal-mensaje">
+  <div class="modal">
+    <h2>Mensaje</h2>
+    <div id="mensaje-alert"></div>
+    <div id="mensaje-detalle"></div>
+    <form id="form-mensaje">
+      <input type="hidden" name="id">
+      <div class="row">
+        <div class="field"><label>Estado</label>
+          <select name="estado"><option value="nuevo">Nuevo</option><option value="en_proceso">En proceso</option><option value="respondido">Respondido</option><option value="archivado">Archivado</option></select>
+        </div>
+        <div class="field check" style="align-self:end;margin-bottom:16px"><input type="checkbox" name="leido" id="chk-leido"><label for="chk-leido" style="margin:0">Leído</label></div>
+      </div>
+      <div class="field"><label>Respuesta enviada (registro interno)</label><textarea name="respuesta" placeholder="Pegá acá lo que le respondiste al cliente, o redactá y luego copiá."></textarea></div>
+      <div class="field"><label>Notas internas</label><textarea name="notas" style="min-height:70px"></textarea></div>
+      <div class="foot">
+        <button type="button" class="btn danger" id="btn-borrar-mensaje">Eliminar</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn secondary" onclick="cerrar('modal-mensaje')">Cerrar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/formadmin.js"></script>
+</body>
+</html>
