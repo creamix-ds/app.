@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Creamixds — Servicios</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>CreamixDS — Servicios</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="top">
     <div class="container">
-      <div class="brand">Creamix <span>DS</span></div>
+      <div class="brand">Creamix<span>DS</span></div>
       <nav>
         <a href="#servicios">Servicios</a>
         <a href="#contacto">Contacto</a>
-        <a href="/admin">Admin</a>
+        <a href="#" id="link-panel" rel="nofollow">Admin</a>
       </nav>
     </div>
   </header>
@@ -51,7 +51,74 @@
     </div>
   </section>
 
-  <footer>© <span id="anio"></span> Mi Agencia</footer>
-  <script src="/form.js"></script>
+  <footer>© <span id="anio"></span> CreamixDS</footer>
+
+<script>
+// ================== CONFIGURACIÓN ==================
+// URL de la app web de Apps Script (termina en /exec). Ver GUIA-PASO-A-PASO.md, paso 2.
+const API_URL = 'https://script.google.com/macros/s/AKfycbzcXjUMtLYcUlwRluieLjvYBkGrIcIPAoJuUQPORFYHnwGOfO9PJ6dUy-1sifI9YmVq/exec';
+// Link al panel admin (AppSheet). Ver paso 8.
+const PANEL_URL = 'https://app.creamixds.com';
+// ===================================================
+
+document.getElementById('link-panel').href = PANEL_URL;
+const cargadoEn = Date.now();
+const apiLista = () => API_URL.startsWith('https://script.google.com/');
+document.getElementById('anio').textContent = new Date().getFullYear();
+const fmt = (n, m) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: m || 'ARS', maximumFractionDigits: 0 }).format(n);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+async function cargarServicios() {
+  const cont = document.getElementById('lista-servicios');
+  if (!apiLista()) { cont.innerHTML = '<div class="empty">Falta configurar API_URL en index.html.</div>'; return; }
+  let servicios = [];
+  try {
+    const res = await fetch(API_URL + '?action=servicios');
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    servicios = json.servicios;
+  } catch (err) {
+    cont.innerHTML = '<div class="empty">No pudimos cargar los servicios. Probá recargar la página.</div>'; return;
+  }
+  const sel = document.querySelector('select[name=servicio_id]');
+  if (!servicios.length) { cont.innerHTML = '<div class="empty">Todavía no hay servicios publicados.</div>'; return; }
+  cont.innerHTML = servicios.map(s => `
+    <article class="card">
+      ${s.imagen_url ? `<img src="${esc(s.imagen_url)}" alt="${esc(s.nombre)}" loading="lazy">` : ''}
+      <div class="body">
+        ${s.categoria ? `<div class="cat">${esc(s.categoria)}</div>` : ''}
+        <h3>${esc(s.nombre)}</h3>
+        <p>${esc(s.descripcion)}</p>
+        <div class="meta">
+          <span class="price">${s.precio > 0 ? fmt(s.precio, s.moneda) : 'A consultar'}</span>
+          <span class="dur">${esc(s.duracion)}</span>
+        </div>
+        <a class="btn sm" href="#contacto" data-id="${s.id}" onclick="preseleccionar('${esc(s.id)}')">Consultar</a>
+      </div>
+    </article>`).join('');
+  servicios.forEach(s => sel.insertAdjacentHTML('beforeend', `<option value="${s.id}">${esc(s.nombre)}</option>`));
+}
+function preseleccionar(id) { document.querySelector('select[name=servicio_id]').value = id; }
+
+document.getElementById('form-contacto').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target, btn = document.getElementById('btn-enviar'), alertBox = document.getElementById('contacto-alert');
+  btn.disabled = true; alertBox.innerHTML = '';
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.elapsed = Date.now() - cargadoEn;
+  try {
+    if (!apiLista()) throw new Error('Falta configurar API_URL en index.html.');
+    // Se envía como texto plano (sin headers) para que Apps Script no rechace el pedido por CORS
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Error al enviar');
+    alertBox.innerHTML = '<div class="alert ok">¡Gracias! Recibimos tu mensaje y te contactaremos pronto.</div>';
+    form.reset();
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert err">${esc(err.message)}</div>`;
+  } finally { btn.disabled = false; }
+});
+cargarServicios();
+</script>
 </body>
 </html>
