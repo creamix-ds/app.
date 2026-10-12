@@ -213,3 +213,17 @@ tr.clickable:hover td { background: var(--card-2); }
 .check { display: flex; align-items: center; gap: 8px; }
 .check input { width: auto; }
 @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } aside { padding: 12px; } aside a.nav { display: inline-flex; } }
+
+/* ---- acceso administrador ---- */
+[hidden] { display: none !important; }
+nav #link-panel { border: 1.5px solid var(--mag); color: var(--text); }
+nav #link-panel:hover { background: rgba(194,71,210,.15); }
+nav #link-salir { font-size: 13px; padding: 8px 10px; }
+footer .copy a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+footer .copy a:hover { color: var(--or-2); }
+.modal-bg { align-items: center; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.login-modal { max-width: 420px; text-align: center; padding: 30px 26px 22px; }
+.login-modal p { color: var(--muted); margin: 0 0 20px; }
+.login-modal #g-btn { display: flex; justify-content: center; min-height: 44px; }
+.login-modal #acceso-msg .alert { margin: 18px 0 0; text-align: left; }
+.login-modal .foot { justify-content: center; margin-top: 20px; }
