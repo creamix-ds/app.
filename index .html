@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CreamixDS — Servicios</title>
+  <meta name="description" content="CreamixDS — Páginas web, sistemas a medida y e-commerce. Conocé nuestros servicios y escribinos.">
+  <meta name="theme-color" content="#09090c">
+  <link rel="icon" type="image/png" href="logo-creamixds.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="top">
+    <div class="container">
+      <a class="brand" href="#"><img src="logo-creamixds.png" alt="CreamixDS" width="99" height="46"></a>
+      <nav>
+        <a href="#servicios">Servicios</a>
+        <a href="#contacto" class="cta">Contacto</a>
+        <a href="#" id="link-panel" rel="nofollow" target="_blank" hidden>Admin</a>
+        <a href="#" id="link-salir" hidden>Salir</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero container">
+    <div class="chip">¡Ya estamos online!</div>
+    <h1>Soluciones <span class="grad">a medida</span> para tu negocio</h1>
+    <div class="line"></div>
+    <p>Conocé nuestros servicios y escribinos: te respondemos a la brevedad.</p>
+    <div class="actions">
+      <a class="btn" href="#servicios">Ver servicios →</a>
+      <a class="btn secondary" href="#contacto">Pedí tu presupuesto</a>
+    </div>
+    <div class="tagline">PÁGINAS WEB<i>|</i>SISTEMAS A MEDIDA<i>|</i>E-COMMERCE</div>
+  </section>
+
+  <section class="container" id="servicios">
+    <h2 class="section">Servicios</h2>
+    <div class="grid" id="lista-servicios"><div class="empty">Cargando…</div></div>
+  </section>
+
+  <section class="container" id="contacto">
+    <h2 class="section">Contacto</h2>
+    <div class="panel">
+      <div id="contacto-alert"></div>
+      <form id="form-contacto" autocomplete="on">
+        <div class="row">
+          <div class="field"><label>Nombre *</label><input name="nombre" required maxlength="100"></div>
+          <div class="field"><label>Email *</label><input name="email" type="email" required maxlength="120"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Teléfono</label><input name="telefono" maxlength="40"></div>
+          <div class="field"><label>Servicio de interés</label>
+            <select name="servicio_id"><option value="">— Ninguno en particular —</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Asunto</label><input name="asunto" maxlength="200"></div>
+        <div class="field"><label>Mensaje *</label><textarea name="mensaje" required maxlength="5000"></textarea></div>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off">
+        <button class="btn" type="submit" id="btn-enviar">Enviar mensaje</button>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <img src="logo-creamixds.png" alt="CreamixDS" width="113" height="52">
+    <div class="tagline">PÁGINAS WEB<i>|</i>SISTEMAS A MEDIDA<i>|</i>E-COMMERCE</div>
+    <div class="contact">
+      <a href="https://instagram.com/creamixds" target="_blank" rel="noopener">@creamixds</a>
+      <a href="https://wa.me/5492494511665" target="_blank" rel="noopener">249 451-1665</a>
+      <a href="mailto:creamixds@gmail.com">creamixds@gmail.com</a>
+    </div>
+    <div class="copy">© <span id="anio"></span> CreamixDS · Tandil · <a href="#" id="link-acceso" rel="nofollow">Acceso</a></div>
+  </footer>
+
+  <!-- Acceso administrador (Google) -->
+  <div class="modal-bg" id="modal-acceso">
+    <div class="modal login-modal">
+      <h2>Acceso administrador</h2>
+      <p>Ingresá con tu cuenta de Google autorizada.</p>
+      <div id="g-btn"></div>
+      <div id="acceso-msg"></div>
+      <div class="foot"><button class="btn secondary sm" type="button" id="cerrar-acceso">Cerrar</button></div>
+    </div>
+  </div>
+
+<script>
+// ================== CONFIGURACIÓN ==================
+// URL de la app web de Apps Script (termina en /exec). Ver GUIA-PASO-A-PASO.md, paso 2.
+const API_URL = 'https://script.google.com/macros/s/AKfycbzcXjUMtLYcUlwRluieLjvYBkGrIcIPAoJuUQPORFYHnwGOfO9PJ6dUy-1sifI9YmVq/exec';
+// Link al panel admin (AppSheet). Ver paso 8.
+const PANEL_URL = 'https://www.appsheet.com/start/375b4c13-e7f8-4c24-bdfc-6d4e9982ea42';
+// ID de cliente OAuth de Google (Google Cloud > Credenciales). Termina en .apps.googleusercontent.com
+const GOOGLE_CLIENT_ID = '411887691042-vdh480tiln7ome9si22nrsm75tv2993l.apps.googleusercontent.com';
+// Cuentas que ven el botón Admin al iniciar sesión
+const ADMIN_EMAILS = ['creamixds@gmail.com'];
+// ===================================================
+
+// Botón Admin: solo aparece si iniciaste sesión con una cuenta de ADMIN_EMAILS
+// (link "Acceso" en el pie de página). El panel en sí lo protege AppSheet con su propio login.
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const link = $('link-panel'), salir = $('link-salir'), acceso = $('link-acceso');
+  const modal = $('modal-acceso'), msg = $('acceso-msg');
+  const KEY = 'cmx_admin_email';
+  link.href = PANEL_URL;
+  const leer = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const guardar = (v) => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  const esAdmin = (e) => !!e && ADMIN_EMAILS.some(a => a.toLowerCase() === String(e).toLowerCase());
+  function pintar() {
+    const ok = esAdmin(leer());
+    link.hidden = !ok; salir.hidden = !ok;
+    acceso.textContent = ok ? 'Panel' : 'Acceso';
+  }
+  try { localStorage.removeItem('cmx_admin'); } catch (e) {}            // limpia el sistema anterior (?admin=1)
+  if (new URLSearchParams(location.search).has('admin')) history.replaceState(null, '', location.pathname + location.hash);
+  pintar();
+
+  function decodificar(jwt) {
+    const b = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const txt = decodeURIComponent(atob(b).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(txt);
+  }
+  function alIngresar(resp) {
+    try {
+      const d = decodificar(resp.credential);
+      if (d.email_verified && esAdmin(d.email)) {
+        guardar(d.email); pintar();
+        msg.innerHTML = '<div class="alert ok">¡Listo! Ya tenés el botón Admin arriba.</div>';
+        setTimeout(() => modal.classList.remove('open'), 1200);
+      } else {
+        guardar(null); pintar();
+        msg.innerHTML = '<div class="alert err">Esta cuenta no tiene acceso al panel.</div>';
+      }
+    } catch (e) { msg.innerHTML = '<div class="alert err">No se pudo validar el inicio de sesión.</div>'; }
+  }
+  let iniciado = false;
+  function cargarGoogle(cb) {
+    if (window.google && google.accounts && google.accounts.id) return cb();
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = cb;
+    s.onerror = () => { msg.innerHTML = '<div class="alert err">No se pudo cargar el acceso con Google.</div>'; };
+    document.head.appendChild(s);
+  }
+  acceso.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (esAdmin(leer())) { window.open(PANEL_URL, '_blank', 'noopener'); return; }
+    msg.innerHTML = ''; modal.classList.add('open');
+    if (GOOGLE_CLIENT_ID.startsWith('PEGAR') || !GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')) {
+      msg.innerHTML = '<div class="alert err">Falta configurar GOOGLE_CLIENT_ID en index.html.</div>'; return;
+    }
+    cargarGoogle(() => {
+      if (!iniciado) { google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: alIngresar }); iniciado = true; }
+      google.accounts.id.renderButton($('g-btn'), { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', locale: 'es' });
+    });
+  });
+  salir.addEventListener('click', (e) => {
+    e.preventDefault(); guardar(null); pintar();
+    try { google.accounts.id.disableAutoSelect(); } catch (_) {}
+  });
+  $('cerrar-acceso').addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+})();
+const cargadoEn = Date.now();
+const apiLista = () => API_URL.startsWith('https://script.google.com/');
+document.getElementById('anio').textContent = new Date().getFullYear();
+const fmt = (n, m) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: m || 'ARS', maximumFractionDigits: 0 }).format(n);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+async function cargarServicios() {
+  const cont = document.getElementById('lista-servicios');
+  if (!apiLista()) { cont.innerHTML = '<div class="empty">Falta configurar API_URL en index.html.</div>'; return; }
+  let servicios = [];
+  try {
+    const res = await fetch(API_URL + '?action=servicios');
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    servicios = json.servicios;
+  } catch (err) {
+    cont.innerHTML = '<div class="empty">No pudimos cargar los servicios. Probá recargar la página.</div>'; return;
+  }
+  const sel = document.querySelector('select[name=servicio_id]');
+  if (!servicios.length) { cont.innerHTML = '<div class="empty">Todavía no hay servicios publicados.</div>'; return; }
+  cont.innerHTML = servicios.map(s => `
+    <article class="card">
+      ${s.imagen_url ? `<img src="${esc(s.imagen_url)}" alt="${esc(s.nombre)}" loading="lazy">` : ''}
+      <div class="body">
+        ${s.categoria ? `<div class="cat">${esc(s.categoria)}</div>` : ''}
+        <h3>${esc(s.nombre)}</h3>
+        <p>${esc(s.descripcion)}</p>
+        <div class="meta">
+          <span class="price">${s.precio > 0 ? fmt(s.precio, s.moneda) : 'A consultar'}</span>
+          <span class="dur">${esc(s.duracion)}</span>
+        </div>
+        <a class="btn sm" href="#contacto" data-id="${s.id}" onclick="preseleccionar('${esc(s.id)}')">Consultar</a>
+      </div>
+    </article>`).join('');
+  servicios.forEach(s => sel.insertAdjacentHTML('beforeend', `<option value="${s.id}">${esc(s.nombre)}</option>`));
+}
+function preseleccionar(id) { document.querySelector('select[name=servicio_id]').value = id; }
+
+document.getElementById('form-contacto').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target, btn = document.getElementById('btn-enviar'), alertBox = document.getElementById('contacto-alert');
+  btn.disabled = true; alertBox.innerHTML = '';
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.elapsed = Date.now() - cargadoEn;
+  try {
+    if (!apiLista()) throw new Error('Falta configurar API_URL en index.html.');
+    // Se envía como texto plano (sin headers) para que Apps Script no rechace el pedido por CORS
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Error al enviar');
+    alertBox.innerHTML = '<div class="alert ok">¡Gracias! Recibimos tu mensaje y te contactaremos pronto.</div>';
+    form.reset();
+  } catch (err) {
+    alertBox.innerHTML = `<div class="alert err">${esc(err.message)}</div>`;
+  } finally { btn.disabled = false; }
+});
+cargarServicios();
+</script>
+</body>
+</html>
