@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -13,7 +13,7 @@
       <nav>
         <a href="#servicios">Servicios</a>
         <a href="#contacto">Contacto</a>
-        <a href="#" id="link-panel" rel="nofollow">Admin</a>
+        <a href="#" id="link-panel" rel="nofollow" hidden>Admin</a>
       </nav>
     </div>
   </header>
@@ -61,7 +61,19 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzcXjUMtLYcUlwRluieLjvY
 const PANEL_URL = 'https://www.appsheet.com/start/375b4c13-e7f8-4c24-bdfc-6d4e9982ea42';
 // ===================================================
 
-document.getElementById('link-panel').href = PANEL_URL;
+// Botón Admin: oculto para el público. Se activa en tu dispositivo entrando una vez a
+// creamixds.com/?admin=1  (y se vuelve a ocultar con  ?admin=0)
+(function () {
+  const link = document.getElementById('link-panel');
+  link.href = PANEL_URL;
+  const p = new URLSearchParams(location.search).get('admin');
+  try {
+    if (p === '1') localStorage.setItem('cmx_admin', '1');
+    if (p === '0') localStorage.removeItem('cmx_admin');
+    if (localStorage.getItem('cmx_admin') === '1') link.hidden = false;
+  } catch (e) { if (p === '1') link.hidden = false; }
+  if (p !== null) history.replaceState(null, '', location.pathname + location.hash);
+})();
 const cargadoEn = Date.now();
 const apiLista = () => API_URL.startsWith('https://script.google.com/');
 document.getElementById('anio').textContent = new Date().getFullYear();
